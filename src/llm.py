@@ -15,7 +15,7 @@ def get_client() -> genai.Client:
 
 
 def generate_text(
-    prompt: str, temperature: float = 0.0, max_output_tokens: int = 1200
+    prompt: str, temperature: float = 0.0, max_output_tokens: int = 2500
 ) -> str:
     client = get_client()
     resp = client.models.generate_content(

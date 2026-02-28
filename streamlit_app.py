@@ -2,6 +2,9 @@ import streamlit as st
 from src.llm import generate_text
 from src.rag import ingest_if_empty, retrieve
 
+import re
+from pathlib import Path
+
 st.set_page_config(page_title="Biorce Mini Demo", layout="wide")
 st.title("Mini Clinical Trial Assistant (RAG MVP)")
 
@@ -12,45 +15,100 @@ condition = st.text_input("Condition", "severe asthma")
 intervention = st.text_input("Intervention", "anti-IL5 biologic")
 population = st.text_input("Population", "adults")
 
-k = st.slider("Top-K sources", 3, 8, 5)
+k = st.slider("Top-K chunks (retrieval)", 3, 8, 5)
+
+
+def extract_doc_ids(text: str):
+    return sorted(set(re.findall(r"\[DOC:([A-Za-z0-9_\-]+)\]", text)))
+
 
 if st.button("Generate draft (with RAG)"):
     query = f"{condition} {intervention} {population}"
     chunks = retrieve(query, k=k)
 
-    sources_block = "\n\n".join([f"{c.sid} ({c.source}):\n{c.text}" for c in chunks])
+    best = min(chunks, key=lambda c: c.distance)
+    st.info(
+        f"Best match = {best.chunk_id} | chunk_index={best.chunk_index} | "
+        f"Source Document: {best.doc_title} (doc_id={best.doc_id}) | distance={best.distance:.3f}"
+    )
+
+    # Tabla para que se vea clarísimo chunk vs doc
+    st.subheader("Retrieved chunks (what the vector DB actually returns)")
+    st.dataframe(
+        [
+            {
+                "chunk_id": c.chunk_id,
+                "chunk_index": c.chunk_index,
+                "distance": round(c.distance, 4),
+                "source_document": c.doc_title,
+                "doc_id": c.doc_id,
+            }
+            for c in chunks
+        ]
+    )
+
+    sources_block = "\n\n".join(
+        [
+            f"{c.chunk_id} | doc_id={c.doc_id} | Source Document: {c.doc_title} | chunk_index={c.chunk_index}\nTEXT:\n{c.text}"
+            for c in chunks
+        ]
+    )
 
     prompt = f"""
-You are drafting a clinical trial protocol.
-Write:
-1) Background (6-10 lines)
-2) Objective (2-3 lines)
-3) Methodology (8-12 lines, high-level)
+        You are drafting a clinical trial protocol.
+        Write:
+        1) Background (6-10 lines)
+        2) Objective (2-3 lines)
+        3) Methodology (8-12 lines, high-level)
 
-TOPIC:
-- Condition: {condition}
-- Intervention: {intervention}
-- Population: {population}
+        TOPIC:
+        - Condition: {condition}
+        - Intervention: {intervention}
+        - Population: {population}
 
-SOURCES (use ONLY these):
-{sources_block}
+        SOURCES (chunks retrieved from a vector DB):
+        {sources_block}
 
-STRICT RULES:
-- Every factual sentence MUST include at least one citation like [S1] or [S2].
-- If a sentence cannot be supported by SOURCES, REMOVE it.
-- Do not invent numbers or claims not in SOURCES.
-- Output only the draft text.
-"""
+        STRICT RULES:
+        - Every factual sentence MUST include at least one citation in this format: [DOC:{'{'}doc_id{'}'}]
+        Example: [DOC:S1]
+        - Cite the DOCUMENT (doc_id), not the chunk_id.
+        - If a claim cannot be supported by SOURCES, REMOVE it.
+        - Do not invent numbers or facts not present in SOURCES.
+        - Output only the draft text.
+        """
 
-    out = generate_text(prompt, temperature=0.2)
+    out = generate_text(prompt, temperature=0.0)
+
+    # ---- UI: Draft + Retrieved chunks ----
     col1, col2 = st.columns(2)
 
     with col1:
         st.subheader("Draft")
         st.write(out)
 
+        # =========================
+        # (C) DOCUMENTOS CITADOS
+        # =========================
+        doc_ids = extract_doc_ids(out)
+
+        st.subheader("Source documents cited in the draft")
+        if not doc_ids:
+            st.warning("No [DOC:...] citations found in the draft.")
+        else:
+            for doc_id in doc_ids:
+                p = Path("data/docs") / f"{doc_id}.txt"
+                st.markdown(f"**DOC:{doc_id}** — file: `{p.name}`")
+                if p.exists():
+                    st.code(p.read_text(encoding="utf-8")[:2000])
+                else:
+                    st.write("⚠️ File not found for this doc_id (check naming).")
+
     with col2:
-        st.subheader("Retrieved sources")
+        st.subheader("Retrieved chunks (what the vector DB returns)")
         for c in chunks:
-            st.markdown(f"**{c.sid}** — {c.source} (distance={c.distance:.3f})")
+            st.markdown(
+                f"**{c.chunk_id}** | chunk_index={c.chunk_index} | "
+                f"distance={c.distance:.3f} | Source Document: {c.doc_title} (doc_id={c.doc_id})"
+            )
             st.code(c.text[:800])
