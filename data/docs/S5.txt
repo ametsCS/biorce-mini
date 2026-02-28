@@ -1,0 +1,13 @@
+TITLE: Good Clinical Practice and Data Integrity (mock)
+YEAR: 2020
+TEXT:
+Adherence to Good Clinical Practice (GCP) guidelines is mandatory for the ethical and scientific integrity of clinical trials.
+Key principles include obtaining informed consent, ensuring the safety of trial subjects, and maintaining verifiable records.
+Investigators are responsible for the medical care of trial subjects and must report serious adverse events (SAEs) promptly.
+Sponsors must implement robust quality assurance and quality control systems throughout the trial lifecycle.
+Regular monitoring visits are conducted to verify that study procedures comply with the approved protocol.
+Data integrity is paramount, requiring secure electronic data capture (EDC) systems with comprehensive audit trails.
+Source document verification (SDV) ensures that the data entered into the clinical database matches the original medical records.
+Any deviations from the clinical protocol must be documented, explained, and reported to the sponsor and IRB.
+Archiving of essential documents must comply with regulatory retention periods after the completion of the trial.
+Continuous training of site staff is required to maintain high standards of clinical data collection and patient safety.

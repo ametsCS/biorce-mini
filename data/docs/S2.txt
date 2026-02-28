@@ -1,0 +1,13 @@
+TITLE: Clinical trial protocol structure (mock)
+YEAR: 2022
+TEXT:
+A protocol often includes Background, Objectives, Study Design, Eligibility, Endpoints, and Safety monitoring.
+Methodology should specify randomization, blinding, and statistical considerations at a high level.
+Clear definition of primary and secondary endpoints is critical for regulatory submission and approval.
+Inclusion and exclusion criteria must be unambiguously detailed to ensure a homogeneous study population.
+The schedule of assessments dictates the frequency of clinic visits, blood draws, and imaging procedures.
+Data management plans outline how clinical data will be collected, validated, and securely stored.
+Ethical considerations, including informed consent procedures and Institutional Review Board (IRB) approval, are mandatory.
+Adverse event reporting timelines are strictly governed by Good Clinical Practice (GCP) guidelines.
+Statistical analysis plans (SAP) are finalized prior to database lock to prevent bias.
+Protocol amendments must be carefully documented and approved by all relevant ethical committees.

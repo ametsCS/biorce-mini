@@ -1,0 +1,13 @@
+TITLE: Placebo response in respiratory trials (mock)
+YEAR: 2021
+TEXT:
+The placebo effect in asthma and COPD clinical trials can significantly impact the evaluation of novel therapeutics.
+Studies show that subjective endpoints, such as patient-reported symptom scores, are highly susceptible to placebo responses.
+Conversely, objective physiological measures like Forced Expiratory Volume in 1 second (FEV1) are less affected.
+Strategies to mitigate placebo response include centralized rater training and the use of objective biomarkers.
+Run-in periods are frequently employed to establish baseline stability and exclude high placebo responders prior to randomization.
+Understanding the magnitude of the placebo effect is crucial for accurate sample size calculation and statistical powering.
+The mode of administration (e.g., inhaler vs. subcutaneous injection) can influence the strength of the placebo effect.
+Double-blind, placebo-controlled designs remain the gold standard, despite the challenges posed by high placebo response rates.
+Researchers must carefully design patient interaction protocols to avoid inadvertently inflating expectation biases.
+Post-hoc analyses often aim to identify demographic or disease characteristics associated with higher placebo responses.

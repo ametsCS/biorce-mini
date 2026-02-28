@@ -1,0 +1,13 @@
+TITLE: Biomarkers in Atopic Dermatitis trials (mock)
+YEAR: 2023
+TEXT:
+Atopic dermatitis is characterized by Type 2 inflammation, with cytokines like IL-4 and IL-13 playing central roles.
+Biomarker analysis in clinical trials often involves measuring serum IgE levels and specific chemokines like TARC (CCL17).
+Stratification of patients based on baseline biomarker profiles helps identify likely responders to targeted therapies.
+Skin biopsy transcriptomics provide deep insights into the mechanism of action of investigational dermatological drugs.
+The correlation between systemic biomarkers in blood and localized skin severity scores (like EASI) is actively investigated.
+Recent trials emphasize the need for non-invasive biomarker collection, such as tape stripping techniques.
+Monitoring changes in biomarker levels during treatment can serve as an early indicator of therapeutic efficacy.
+Predictive biomarkers are highly sought after to personalize treatment and minimize unnecessary immunosuppressant exposure.
+Standardization of assay methodologies across different clinical trial sites remains a logistical challenge.
+Future trials will likely incorporate multi-omics approaches to fully characterize the patient's baseline inflammatory state.

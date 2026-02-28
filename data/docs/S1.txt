@@ -1,0 +1,13 @@
+TITLE: Asthma biologics overview (mock)
+YEAR: 2023
+TEXT:
+Biologic therapies targeting IL-5 are used in severe eosinophilic asthma to reduce exacerbations.
+Trials typically define inclusion criteria based on exacerbation history and biomarkers.
+Safety monitoring commonly includes adverse event tracking and periodic clinical assessments.
+In severe phenotypes, the reduction of oral corticosteroid dependence is a primary endpoint.
+Monoclonal antibodies have reshaped the treatment landscape, offering targeted intervention.
+Patient selection heavily relies on baseline blood eosinophil counts and fractional exhaled nitric oxide (FeNO).
+Real-world evidence largely supports the efficacy observed in randomized controlled trials.
+Long-term extension studies confirm the sustained safety profile of these interventions over multiple years.
+The cost-effectiveness of these treatments remains a topic of ongoing health economics research.
+Future directions include exploring the efficacy of combining different biologic agents.

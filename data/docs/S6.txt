@@ -1,0 +1,13 @@
+TITLE: Patient-Reported Outcomes in Clinical Research (mock)
+YEAR: 2022
+TEXT:
+Patient-Reported Outcomes (PROs) provide direct assessments of a patient's health status without interpretation by a clinician.
+In respiratory trials, validated instruments such as the Asthma Control Questionnaire (ACQ) are widely utilized.
+Electronic PRO (ePRO) systems have significantly improved data collection compliance compared to traditional paper diaries.
+Regulatory agencies like the FDA emphasize PROs to demonstrate meaningful clinical benefit beyond physiological measurements.
+Translation and cultural adaptation of PRO instruments are essential for global, multi-center clinical trials.
+Recall bias is a common limitation, which is why daily ePRO entries are often preferred over weekly or monthly questionnaires.
+Missing data handling in PRO analysis requires sophisticated statistical methods to avoid biased conclusions.
+The minimally important difference (MID) defines the smallest change in a PRO score that is clinically meaningful to the patient.
+Integrating PRO data with wearable device data represents the next frontier in continuous patient monitoring during trials.
+Successful implementation of PROs requires early planning and selection of fit-for-purpose measurement instruments.
