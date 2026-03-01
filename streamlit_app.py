@@ -1,128 +1,111 @@
 import streamlit as st
-from src.llm import generate_text
-from src.rag import ingest_if_empty, retrieve
-
 import re
 from pathlib import Path
 
+from src.rag import ingest_if_empty
+from src.graph import build_graph
+
+
 st.set_page_config(page_title="Biorce Mini Demo", layout="wide")
-st.title("Mini Clinical Trial Assistant (RAG MVP)")
+st.title("Mini Clinical Trial Assistant (Agentic + RAG + Review)")
 
 # Asegura que hay índice
 ingest_if_empty()
 
-condition = st.text_input("Condition", "severe asthma")
-intervention = st.text_input("Intervention", "anti-IL5 biologic")
-population = st.text_input("Population", "adults")
 
-k = st.slider("Top-K chunks (retrieval)", 3, 8, 5)
+@st.cache_resource
+def get_app():
+    return build_graph()
 
 
 def extract_doc_ids(text: str):
-    return sorted(set(re.findall(r"\[DOC:([A-Za-z0-9_\-]+)\]", text)))
+    return sorted(set(re.findall(r"\[DOC:([A-Za-z0-9_\-]+)\]", text or "")))
 
 
-if st.button("Generate draft (with RAG)"):
-    query = f"{condition} {intervention} {population}"
-    chunks = retrieve(query, k=k)
+# -------- UI Inputs --------
+condition = st.text_input("Condition", "severe asthma")
+intervention = st.text_input("Intervention", "anti-IL5 biologic")
+population = st.text_input("Population", "adults")
+k = st.slider("Top-K chunks (retrieval)", 3, 8, 5)
 
-    best = min(chunks, key=lambda c: c.distance)
-    st.info(
-        f"Best match = {best.chunk_id} | chunk_index={best.chunk_index} | "
-        f"Source Document: {best.doc_title} (doc_id={best.doc_id}) | distance={best.distance:.3f}"
-    )
+# -------- Show graph (nodes + edges) --------
+st.subheader("Workflow graph (nodes + edges)")
+dot = """
+digraph G {
+  rankdir=LR;
+  retrieve -> research -> write -> review;
+  review -> revise [label="if unsupported && iter<1"];
+  revise -> write [label="loop once"];
+  review -> end [label="else"];
+}
+"""
+st.graphviz_chart(dot)
 
-    # Tabla para que se vea clarísimo chunk vs doc
-    st.subheader("Retrieved chunks (what the vector DB actually returns)")
-    st.dataframe(
-        [
-            {
-                "chunk_id": c.chunk_id,
-                "chunk_index": c.chunk_index,
-                "distance": round(c.distance, 4),
-                "source_document": c.doc_title,
-                "doc_id": c.doc_id,
-            }
-            for c in chunks
-        ]
-    )
+# -------- Run workflow --------
+if st.button("Run Agentic Workflow"):
+    app = get_app()
 
-    sources_block = "\n\n".join(
-        [
-            f"{c.chunk_id} | doc_id={c.doc_id} | Source Document: {c.doc_title} | chunk_index={c.chunk_index}\nTEXT:\n{c.text}"
-            for c in chunks
-        ]
-    )
+    init_state = {
+        "condition": condition,
+        "intervention": intervention,
+        "population": population,
+        "k": k,
+        "query": "",
+        "sources": [],
+        "evidence": {},
+        "draft": "",
+        "review": {},
+        "iteration": 0,
+        "trace": [],
+    }
 
-    prompt = f"""
-        You are drafting a clinical trial protocol draft (VERY concise).
+    status = st.status("Running workflow...", expanded=True)
 
-        TOPIC:
-        - Condition: {condition}
-        - Intervention: {intervention}
-        - Population: {population}
+    final_state = None
+    # Stream states as the graph progresses (so we can show step-by-step)
+    for step_state in app.stream(init_state, stream_mode="values"):
+        final_state = step_state
+        trace = step_state.get("trace", [])
+        if trace:
+            last = trace[-1]
+            status.write(f"✅ **{last['node']}** — {last.get('summary','')}")
+        else:
+            status.write("...")
 
-        SOURCES (chunks retrieved from a vector DB):
-        {sources_block}
+    status.update(label="Workflow completed", state="complete", expanded=False)
 
-        STRICT GROUNDING RULES:
-        - Use ONLY the provided SOURCES.
-        - Every bullet MUST include at least one citation in this exact format: [DOC:doc_id]
-        Example: [DOC:S1]
-        - Cite the DOCUMENT (doc_id), not the chunk_id.
-        - If a claim cannot be supported by SOURCES, OMIT it.
-        - Do NOT invent numbers or facts.
+    # -------- Expected outputs --------
+    if not final_state:
+        st.error("No output state received from the graph.")
+        st.stop()
 
-        OUTPUT FORMAT (STRICT MARKDOWN — NO DEVIATIONS):
-        - Use EXACTLY these headings (on their own line):
-        **Background**
-        **Objective**
-        **Methodology**
-        - Use "*" ONLY for the required bold headings.
-        - Use "-" for all bullet points.
-        - No paragraphs. Only bullet points.
-        - Do NOT put text on the same line as a heading.
-        - No extra sections.
-        - No explanations.
+    # --- Retrieved chunks summary ---
+    sources = final_state.get("sources", [])
+    if sources:
+        best = min(sources, key=lambda x: x["distance"])
+        st.info(
+            f"Best match = {best['chunk_id']} | chunk_index={best['chunk_index']} | "
+            f"Source Document: {best.get('doc_title','')} (doc_id={best['doc_id']}) | distance={best['distance']:.3f}"
+        )
 
-        STRUCTURE TO FOLLOW EXACTLY:
+    st.subheader("Execution trace (order of nodes)")
+    st.dataframe(final_state.get("trace", []))
 
-        **Background**
-        - <bullet, max 18 words> [DOC:SX]
-        - <bullet, max 18 words> [DOC:SX]
-
-        **Objective**
-        - <bullet, max 18 words> [DOC:SX]
-
-        **Methodology**
-        - <bullet, max 18 words> [DOC:SX]
-        - <bullet, max 18 words> [DOC:SX]
-        - <bullet, max 18 words> [DOC:SX]
-
-        HARD LIMITS:
-        - Maximum 120 total words.
-        - Only output valid Markdown.
-        """
-
-    out = generate_text(prompt, temperature=0.0)
-    print("LLM Output:\n", out)
-
-    # ---- UI: Draft + Retrieved chunks ----
+    # Layout
     col1, col2 = st.columns(2)
 
-    # =========================
-    # LEFT COLUMN → DRAFT
-    # =========================
     with col1:
-        st.subheader("Draft")
-        st.info(out)
+        st.subheader("Draft (final)")
+        st.info(final_state.get("draft", ""))
 
-        # =========================
-        # DOCUMENTOS CITADOS
-        # =========================
-        doc_ids = extract_doc_ids(out)
+        st.subheader("Evidence (Researcher output)")
+        st.json(final_state.get("evidence", {}))
+
+        st.subheader("Review (Reviewer output)")
+        st.json(final_state.get("review", {}))
 
         st.subheader("Source documents cited in the draft")
+        doc_ids = extract_doc_ids(final_state.get("draft", ""))
         if not doc_ids:
             st.warning("No [DOC:...] citations found in the draft.")
         else:
@@ -134,15 +117,27 @@ if st.button("Generate draft (with RAG)"):
                 else:
                     st.write("⚠️ File not found for this doc_id (check naming).")
 
-    # =========================
-    # RIGHT COLUMN → CHUNKS
-    # =========================
     with col2:
         st.subheader("Retrieved chunks (what the vector DB returns)")
-
-        for c in chunks:
-            st.markdown(
-                f"**{c.chunk_id}** | chunk_index={c.chunk_index} | "
-                f"distance={c.distance:.3f} | Source Document: {c.doc_title}"
+        if not sources:
+            st.warning("No chunks retrieved.")
+        else:
+            st.dataframe(
+                [
+                    {
+                        "chunk_id": s["chunk_id"],
+                        "chunk_index": s["chunk_index"],
+                        "distance": round(s["distance"], 4),
+                        "doc_id": s["doc_id"],
+                        "source_document": s.get("doc_title", ""),
+                    }
+                    for s in sources
+                ]
             )
-            st.code(c.text[:800])
+
+            for s in sources:
+                st.markdown(
+                    f"**{s['chunk_id']}** | chunk_index={s['chunk_index']} | "
+                    f"distance={s['distance']:.3f} | DOC:{s['doc_id']} | {s.get('doc_title','')}"
+                )
+                st.code((s.get("text") or "")[:800])
