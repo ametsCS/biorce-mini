@@ -23,6 +23,28 @@ def _safe_json_loads(s: str) -> Dict[str, Any]:
         raise
 
 
+def hard_validate_citations(draft: str, allowed_docs: list[str]) -> list[dict]:
+    issues = []
+    for line in (draft or "").splitlines():
+        line = line.strip()
+        if line.startswith("-"):
+            cites = re.findall(r"\[DOC:([A-Za-z0-9_\-]+)\]", line)
+            if not cites:
+                issues.append(
+                    {"sentence": line, "reason": "Missing [DOC:...] citation"}
+                )
+            else:
+                for c in cites:
+                    if c not in allowed_docs:
+                        issues.append(
+                            {
+                                "sentence": line,
+                                "reason": f"Invalid doc_id citation: {c}",
+                            }
+                        )
+    return issues
+
+
 def _add_trace(
     state: Dict[str, Any], node: str, summary: str, extra: Dict[str, Any] | None = None
 ):
@@ -226,6 +248,25 @@ def reviewer_node(state: State) -> State:
         ]
     )
     allowed_docs = sorted(set([s["doc_id"] for s in state["sources"]]))
+    hard_issues = hard_validate_citations(state["draft"], allowed_docs)
+    if hard_issues:
+        review = {
+            "unsupported_sentences": hard_issues,
+            "fix_instructions": [
+                "Add a valid [DOC:...] citation to every bullet or remove the bullet."
+            ],
+            "revised_draft": "",
+        }
+        return {
+            **state,
+            "review": review,
+            "trace": _add_trace(
+                state,
+                "review",
+                f"Hard-review failed. unsupported={len(hard_issues)}.",
+                {"unsupported_count": len(hard_issues)},
+            ),
+        }
 
     prompt = f"""
 You are a strict reviewer for grounding.
