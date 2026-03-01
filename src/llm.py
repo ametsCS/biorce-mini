@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 from google import genai
 
-MODEL = "gemini-3-flash-preview"
+MODEL = "gemini-2.5-flash"
 
 
 def get_client() -> genai.Client:
@@ -15,7 +15,7 @@ def get_client() -> genai.Client:
 
 
 def generate_text(
-    prompt: str, temperature: float = 0.0, max_output_tokens: int = 2500
+    prompt: str, temperature: float = 0.0, max_output_tokens: int = 2000
 ) -> str:
     client = get_client()
     resp = client.models.generate_content(
