@@ -55,11 +55,7 @@ if st.button("Generate draft (with RAG)"):
     )
 
     prompt = f"""
-        You are drafting a clinical trial protocol.
-        Write:
-        1) Background (6-10 lines)
-        2) Objective (2-3 lines)
-        3) Methodology (8-12 lines, high-level)
+        You are drafting a clinical trial protocol draft (VERY concise).
 
         TOPIC:
         - Condition: {condition}
@@ -69,26 +65,60 @@ if st.button("Generate draft (with RAG)"):
         SOURCES (chunks retrieved from a vector DB):
         {sources_block}
 
-        STRICT RULES:
-        - Every factual sentence MUST include at least one citation in this format: [DOC:{'{'}doc_id{'}'}]
+        STRICT GROUNDING RULES:
+        - Use ONLY the provided SOURCES.
+        - Every bullet MUST include at least one citation in this exact format: [DOC:doc_id]
         Example: [DOC:S1]
         - Cite the DOCUMENT (doc_id), not the chunk_id.
-        - If a claim cannot be supported by SOURCES, REMOVE it.
-        - Do not invent numbers or facts not present in SOURCES.
-        - Output only the draft text.
+        - If a claim cannot be supported by SOURCES, OMIT it.
+        - Do NOT invent numbers or facts.
+
+        OUTPUT FORMAT (STRICT MARKDOWN — NO DEVIATIONS):
+        - Use EXACTLY these headings (on their own line):
+        **Background**
+        **Objective**
+        **Methodology**
+        - Use "*" ONLY for the required bold headings.
+        - Use "-" for all bullet points.
+        - No paragraphs. Only bullet points.
+        - Do NOT put text on the same line as a heading.
+        - No extra sections.
+        - No explanations.
+
+        STRUCTURE TO FOLLOW EXACTLY:
+
+        **Background**
+        - <bullet, max 18 words> [DOC:SX]
+        - <bullet, max 18 words> [DOC:SX]
+
+        **Objective**
+        - <bullet, max 18 words> [DOC:SX]
+
+        **Methodology**
+        - <bullet, max 18 words> [DOC:SX]
+        - <bullet, max 18 words> [DOC:SX]
+        - <bullet, max 18 words> [DOC:SX]
+
+        HARD LIMITS:
+        - Maximum 120 total words.
+        - Only output valid Markdown.
         """
 
     out = generate_text(prompt, temperature=0.0)
+    print("LLM Output:\n", out)
 
     # ---- UI: Draft + Retrieved chunks ----
     col1, col2 = st.columns(2)
 
+    # =========================
+    # LEFT COLUMN → DRAFT
+    # =========================
     with col1:
         st.subheader("Draft")
-        st.write(out)
+        st.info(out)
 
         # =========================
-        # (C) DOCUMENTOS CITADOS
+        # DOCUMENTOS CITADOS
         # =========================
         doc_ids = extract_doc_ids(out)
 
@@ -104,11 +134,15 @@ if st.button("Generate draft (with RAG)"):
                 else:
                     st.write("⚠️ File not found for this doc_id (check naming).")
 
+    # =========================
+    # RIGHT COLUMN → CHUNKS
+    # =========================
     with col2:
         st.subheader("Retrieved chunks (what the vector DB returns)")
+
         for c in chunks:
             st.markdown(
                 f"**{c.chunk_id}** | chunk_index={c.chunk_index} | "
-                f"distance={c.distance:.3f} | Source Document: {c.doc_title} (doc_id={c.doc_id})"
+                f"distance={c.distance:.3f} | Source Document: {c.doc_title}"
             )
             st.code(c.text[:800])
