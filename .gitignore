@@ -1,10 +1,28 @@
 # secrets
 .env
+.streamlit/secrets.toml
 
 # python
 .venv/
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+
+# build artifacts
+dist/
+build/
+*.egg-info/
+
+# test & lint cache
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
 # local data
 data/chroma/
+
+# os
+.DS_Store
+Thumbs.db

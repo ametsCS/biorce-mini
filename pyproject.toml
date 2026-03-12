@@ -1,0 +1,17 @@
+[project]
+name = "biorce-mini"
+version = "0.1.0"
+description = "A RAG-based biomedical assistant"
+requires-python = ">=3.10"
+dependencies = [
+    "google-genai",
+    "python-dotenv",
+    "streamlit",
+    "langgraph",
+    "chromadb",
+    "sentence-transformers",
+    "pydantic",
+]
+
+[tool.uv]
+package = false
