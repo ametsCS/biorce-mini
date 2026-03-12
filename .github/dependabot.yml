@@ -1,0 +1,42 @@
+version: 2
+updates:
+- package-ecosystem: pip
+  directory: "/"
+  schedule:
+    interval: monthly
+    day: monday
+    time: "08:00"
+    timezone: Europe/Madrid
+  labels:
+    - "python"
+    - "dependencies"
+  groups:
+    python-breaking-changes:
+      patterns:
+        - "*"
+      update-types:
+        - "major"
+    python-packages:
+      patterns:
+        - "*"
+      update-types:
+        - "minor"
+        - "patch"
+
+- package-ecosystem: github-actions
+  directory: "/"
+  schedule:
+    interval: monthly
+    day: monday
+    time: "08:00"
+    timezone: Europe/Madrid
+  labels:
+    - "github-actions"
+    - "dependencies"
+  groups:
+    github-actions-packages:
+      patterns:
+        - "*"
+      update-types:
+        - "minor"
+        - "patch"
