@@ -73,6 +73,78 @@ LG --> UI
 
 ---
 
+## AI-Native Development Toolkit 🤖
+
+This project doesn't just *build* AI systems — it's developed *with* a fully wired AI agent toolkit tuned specifically for this codebase. Coding conventions, architectural patterns, testing strategies, and commit hygiene are all encoded and enforced automatically. No context-switching, no copy-pasted boilerplate, no forgotten standards.
+
+### Copilot Agents — type `@agent-name` in VS Code Chat
+
+Eight specialized agents that know this codebase deeply:
+
+| Agent | Role |
+|---|---|
+| `@demo.tdd-coach` | Orchestrates the full **Red → Green → Refactor** cycle end-to-end |
+| `@demo.tdd-red` | Writes one failing test — and stops there |
+| `@demo.tdd-green` | Writes the minimum production code to make it pass |
+| `@demo.tdd-refactor` | Cleans up structure while keeping every test green |
+| `@demo.tdd-implement` | Full TDD cycle for a single well-defined fix |
+| `@demo.code-reviewer` | Reviews staged changes: architecture, security, naming, test coverage |
+| `@demo.pr-feedback` | Reads GitHub PR review comments and applies or discards them |
+| `@demo.refactor` | Identifies code smells and proposes SOLID-aligned refactors |
+
+### Slash Commands — type `/command` in Copilot Chat
+
+Seven reusable commands for routine tasks that used to eat up time:
+
+| Command | What it does |
+|---|---|
+| `/demo.smart-commit` | Generates a Conventional Commit message from your staged diff |
+| `/demo.pr-sync` | Auto-fills the PR template from staged changes + linked issues |
+| `/demo.scaffold-feature` | Creates a new LangGraph node or `src/` module skeleton with tests |
+| `/demo.create-adr` | Writes an Architecture Decision Record |
+| `/demo.create-skill` | Packages new domain knowledge as a reusable skill |
+| `/demo.update-dependencies` | Guides a safe `uv` dependency upgrade |
+
+### Claude Skills — auto-loaded context
+
+Six knowledge packages that Claude loads automatically when relevant — no manual prompting needed:
+
+- `python-architecture` — LangGraph node patterns, RAG layer conventions, `src/` structure rules
+- `python-testing` — pytest AAA pattern, Polyfactory builders, async test setups
+- `common-security` — prompt injection guards, API key handling, Streamlit input validation
+- `common-observability` — structured logging for each LangGraph pipeline node
+- `common-testing-conventions` — naming, mocking, and assertion standards
+- `common-git` — Conventional Commits, branch strategy, PR workflow
+
+### TDD workflow in action
+
+```mermaid
+sequenceDiagram
+    participant Dev as Developer
+    participant Coach as @demo.tdd-coach
+    participant Red as @demo.tdd-red
+    participant Green as @demo.tdd-green
+    participant Ref as @demo.tdd-refactor
+    participant CI as GitHub Actions
+
+    Dev->>Coach: "Add a summarize node to the pipeline"
+    Coach->>Red: Write a failing test
+    Red-->>Dev: test_summarize_node.py ❌ RED
+    Coach->>Green: Make it pass
+    Green-->>Dev: summarize_node.py ✅ GREEN
+    Coach->>Ref: Clean up
+    Ref-->>Dev: Formatted + refactored ✨
+    Dev->>CI: git push
+    CI-->>Dev: uv run pytest — all tests pass ✅
+```
+
+> **Suggested screenshots to add here:**
+> 1. VS Code Chat showing the `/` picker with `demo.*` slash commands visible
+> 2. VS Code Chat showing the `@` agent picker with `demo.*` agents listed
+> 3. Side-by-side: a failing test (red) next to the minimal passing implementation (green)
+
+---
+
 ## Workflow graph (nodes + edges)
 
 Current pipeline:
