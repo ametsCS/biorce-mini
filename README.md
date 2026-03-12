@@ -71,6 +71,17 @@ LG --> UI
 - **SentenceTransformers**: embeddings for chunks + queries
 - **LLM via API**: used for Researcher/Writer/Reviewer steps
 
+
+## Workflow graph (nodes + edges)
+
+Current pipeline:
+
+- `retrieve → research → write → review`
+- `review → revise → write` *(loop once only if needed)*
+- `review → end` *(if no unsupported content or loop limit reached)*
+
+In the Streamlit UI, the graph is rendered via Graphviz so the user can see the node/edge logic visually.
+
 ---
 
 ## AI-Native Development Toolkit 🤖
@@ -138,23 +149,6 @@ sequenceDiagram
     CI-->>Dev: uv run pytest — all tests pass ✅
 ```
 
-> **Suggested screenshots to add here:**
-> 1. VS Code Chat showing the `/` picker with `demo.*` slash commands visible
-> 2. VS Code Chat showing the `@` agent picker with `demo.*` agents listed
-> 3. Side-by-side: a failing test (red) next to the minimal passing implementation (green)
-
----
-
-## Workflow graph (nodes + edges)
-
-Current pipeline:
-
-- `retrieve → research → write → review`
-- `review → revise → write` *(loop once only if needed)*
-- `review → end` *(if no unsupported content or loop limit reached)*
-
-In the Streamlit UI, the graph is rendered via Graphviz so the user can see the node/edge logic visually.
-
 ---
 
 ## Repo structure
@@ -168,10 +162,13 @@ biorce-mini/
     rag.py                # Chunking, embeddings, Chroma indexing + retrieval
     llm.py                # LLM client wrapper (reads API key from .env)
     graph.py              # LangGraph workflow: retrieve/research/write/review/revise
+  tests/
+    test_rag.py           # Unit tests for RAG pure functions
+    test_graph.py         # Unit tests for graph pure functions
   streamlit_app.py        # Streamlit UI (runs graph + shows trace/artifacts)
   ingest.py               # One-time indexing helper
-  run_graph.py            # CLI runner for debugging the graph
-  requirements.txt
+  pyproject.toml          # Dependencies and project config
+  uv.lock
   .env.example
   .gitignore
 ```
@@ -180,19 +177,20 @@ biorce-mini/
 
 ## Setup
 
-### 1) Create a virtual environment
+### 1) Install uv (if you haven't already)
 ```bash
-python -m venv .venv
-# Windows:
-.venv\Scripts\activate
-# macOS/Linux:
-# source .venv/bin/activate
+# Windows (PowerShell)
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+# macOS/Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
 ### 2) Install dependencies
 ```bash
-pip install -r requirements.txt
+uv sync
 ```
+
+This creates the virtual environment and installs all dependencies automatically — no manual `venv` needed.
 
 ### 3) Configure environment variables
 Copy the example file:
@@ -233,12 +231,12 @@ This demo is designed to work with small mock docs (fast iteration), but you can
 
 ### 1) Index documents (first time only)
 ```bash
-python ingest.py
+uv run python ingest.py
 ```
 
 ### 2) Launch Streamlit
 ```bash
-streamlit run streamlit_app.py
+uv run streamlit run streamlit_app.py
 ```
 
 Open the local Streamlit URL shown in your terminal.
