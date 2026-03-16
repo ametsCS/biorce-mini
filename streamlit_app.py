@@ -1,10 +1,20 @@
 import streamlit as st
 import re
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables FIRST before any other imports
+load_dotenv()
 
 from src.rag import ingest_if_empty
 from src.graph import build_graph
-from src.observability import assert_langfuse_configured, get_langfuse, observe
+from src.observability import (
+    assert_langfuse_configured,
+    assert_huggingface_token_configured,
+    get_langfuse,
+    observe,
+)
+from langfuse import propagate_attributes
 
 
 st.set_page_config(page_title="Biorce Mini Demo", layout="wide")
@@ -13,6 +23,7 @@ st.title("Mini Clinical Trial Assistant (Agentic + RAG + Review)")
 # Asegura que hay índice
 ingest_if_empty()
 assert_langfuse_configured()
+assert_huggingface_token_configured()
 
 
 @st.cache_resource
@@ -48,14 +59,14 @@ st.graphviz_chart(dot)
 
 @observe(name="clinical_trial_pipeline")
 def _run_pipeline(app, init_state: dict) -> list[dict]:
-    get_langfuse().set_current_trace_io(
-        input={
+    with propagate_attributes(
+        metadata={
             "condition": init_state["condition"],
             "intervention": init_state["intervention"],
             "population": init_state["population"],
-        },
-    )
-    return list(app.stream(init_state, stream_mode="values"))
+        }
+    ):
+        return list(app.stream(init_state, stream_mode="values"))
 
 
 if st.button("Run Agentic Workflow"):
