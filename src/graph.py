@@ -9,6 +9,7 @@ from langgraph.graph import StateGraph, END
 
 from src.rag import retrieve
 from src.llm import generate_text
+from src.observability import observe
 
 
 def _safe_json_loads(s: str) -> Dict[str, Any]:
@@ -77,6 +78,7 @@ class State(TypedDict):
     trace: List[Dict[str, Any]]  # timeline for UI
 
 
+@observe(name="retrieve")
 def retrieve_node(state: State) -> State:
     query = f"{state['condition']} {state['intervention']} {state['population']}"
     chunks = retrieve(query, k=state["k"])
@@ -110,10 +112,11 @@ def retrieve_node(state: State) -> State:
     }
 
 
+@observe(name="research")
 def researcher_node(state: State) -> State:
     sources_block = "\n\n".join(
         [
-            f"{s['chunk_id']} | DOC:{s['doc_id']} | {s.get('doc_title','')} | chunk_index={s['chunk_index']}\nTEXT:\n{s['text']}"
+            f"{s['chunk_id']} | DOC:{s['doc_id']} | {s.get('doc_title', '')} | chunk_index={s['chunk_index']}\nTEXT:\n{s['text']}"
             for s in state["sources"]
         ]
     )
@@ -153,10 +156,11 @@ SOURCES:
     }
 
 
+@observe(name="write")
 def writer_node(state: State) -> State:
     sources_block = "\n\n".join(
         [
-            f"{s['chunk_id']} | DOC:{s['doc_id']} | {s.get('doc_title','')} | chunk_index={s['chunk_index']}\nTEXT:\n{s['text']}"
+            f"{s['chunk_id']} | DOC:{s['doc_id']} | {s.get('doc_title', '')} | chunk_index={s['chunk_index']}\nTEXT:\n{s['text']}"
             for s in state["sources"]
         ]
     )
@@ -164,7 +168,7 @@ def writer_node(state: State) -> State:
     evidence_lines = []
     for item in state.get("evidence", {}).get("key_findings", []):
         srcs = ", ".join(item.get("sources", []))
-        evidence_lines.append(f"- {item.get('claim','')} [DOC:{srcs}]")
+        evidence_lines.append(f"- {item.get('claim', '')} [DOC:{srcs}]")
     evidence_brief = (
         "\n".join(evidence_lines) if evidence_lines else "- No strong findings."
     )
@@ -240,10 +244,11 @@ HARD LIMITS:
     }
 
 
+@observe(name="review")
 def reviewer_node(state: State) -> State:
     sources_block = "\n\n".join(
         [
-            f"{s['chunk_id']} | DOC:{s['doc_id']} | {s.get('doc_title','')} | chunk_index={s['chunk_index']}\nTEXT:\n{s['text']}"
+            f"{s['chunk_id']} | DOC:{s['doc_id']} | {s.get('doc_title', '')} | chunk_index={s['chunk_index']}\nTEXT:\n{s['text']}"
             for s in state["sources"]
         ]
     )
@@ -314,6 +319,7 @@ def route_after_review(state: State) -> str:
     return "end"
 
 
+@observe(name="revise")
 def revise_node(state: State) -> State:
     # 1 loop máximo
     revised = state.get("review", {}).get("revised_draft", "")

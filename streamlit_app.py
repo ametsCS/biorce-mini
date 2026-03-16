@@ -4,6 +4,7 @@ from pathlib import Path
 
 from src.rag import ingest_if_empty
 from src.graph import build_graph
+from src.observability import assert_langfuse_configured, get_langfuse, observe
 
 
 st.set_page_config(page_title="Biorce Mini Demo", layout="wide")
@@ -11,6 +12,7 @@ st.title("Mini Clinical Trial Assistant (Agentic + RAG + Review)")
 
 # Asegura que hay índice
 ingest_if_empty()
+assert_langfuse_configured()
 
 
 @st.cache_resource
@@ -42,6 +44,20 @@ digraph G {
 st.graphviz_chart(dot)
 
 # -------- Run workflow --------
+
+
+@observe(name="clinical_trial_pipeline")
+def _run_pipeline(app, init_state: dict) -> list[dict]:
+    get_langfuse().set_current_trace_io(
+        input={
+            "condition": init_state["condition"],
+            "intervention": init_state["intervention"],
+            "population": init_state["population"],
+        },
+    )
+    return list(app.stream(init_state, stream_mode="values"))
+
+
 if st.button("Run Agentic Workflow"):
     app = get_app()
 
@@ -62,13 +78,12 @@ if st.button("Run Agentic Workflow"):
     status = st.status("Running workflow...", expanded=True)
 
     final_state = None
-    # Stream states as the graph progresses (so we can show step-by-step)
-    for step_state in app.stream(init_state, stream_mode="values"):
+    for step_state in _run_pipeline(app, init_state):
         final_state = step_state
         trace = step_state.get("trace", [])
         if trace:
             last = trace[-1]
-            status.write(f"✅ **{last['node']}** — {last.get('summary','')}")
+            status.write(f"✅ **{last['node']}** — {last.get('summary', '')}")
         else:
             status.write("...")
 
@@ -85,7 +100,7 @@ if st.button("Run Agentic Workflow"):
         best = min(sources, key=lambda x: x["distance"])
         st.info(
             f"Best match = {best['chunk_id']} | chunk_index={best['chunk_index']} | "
-            f"Source Document: {best.get('doc_title','')} (doc_id={best['doc_id']}) | distance={best['distance']:.3f}"
+            f"Source Document: {best.get('doc_title', '')} (doc_id={best['doc_id']}) | distance={best['distance']:.3f}"
         )
 
     st.subheader("Execution trace (order of nodes)")
@@ -138,6 +153,6 @@ if st.button("Run Agentic Workflow"):
             for s in sources:
                 st.markdown(
                     f"**{s['chunk_id']}** | chunk_index={s['chunk_index']} | "
-                    f"distance={s['distance']:.3f} | DOC:{s['doc_id']} | {s.get('doc_title','')}"
+                    f"distance={s['distance']:.3f} | DOC:{s['doc_id']} | {s.get('doc_title', '')}"
                 )
                 st.code((s.get("text") or "")[:800])
