@@ -70,7 +70,9 @@ LG --> UI
 - **Chroma (local)**: persistent vector store (`data/chroma/`)
 - **SentenceTransformers**: embeddings for chunks + queries
 - **LLM via API**: used for Researcher/Writer/Reviewer steps
+- **Langfuse**: distributed tracing for pipeline observability (free tier: 50K observations/month)
 
+---
 
 ## Workflow graph (nodes + edges)
 
@@ -283,6 +285,18 @@ The demo enforces:
 - citations formatted like `[DOC:S1]`
 - the Writer is instructed to use **only retrieved sources**
 - the Reviewer checks grounding against sources and can request revisions
+
+---
+### Observability via Langfuse
+
+All LLM calls are automatically traced to **Langfuse** (free cloud or self-hosted):
+
+- **Token tracking**: input/output tokens per generation
+- **Cost monitoring**: cost per LLM call (requires model mapping in Langfuse)
+- **Latency**: end-to-end pipeline duration + per-node breakdown
+- **Trace hierarchy**: full call tree visible in Langfuse UI
+
+Setup: Add your Langfuse API keys to `.env` (get free tier at [cloud.langfuse.com](https://cloud.langfuse.com)).
 
 ---
 
